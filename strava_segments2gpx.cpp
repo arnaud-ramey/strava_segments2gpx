@@ -180,6 +180,8 @@ bool parse_response(const std::string & response,
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 // https://strava.github.io/api/v3/segments/
 //  curl -G https://www.strava.com/api/v3/segments/explore
 //       -H "Authorization: Bearer 83ebeabdec09f6670863766f792ead24d61fe3f9"
@@ -276,6 +278,17 @@ bool file2gpx(const std::string & segmentsfile,
     return false;
   }
   unsigned int counter = 0;
+  std::string gopath = getenv("GOPATH");
+  if (gopath.empty()) {
+    printf("Could not find GOPATH, did you install Go? Check doc.\n");
+    return false;
+  }
+  std::string goexe_path = gopath + "/bin/strava-segment-to-gpx";
+  if (!file_exists(goexe_path)) {
+    printf("Could not find 'strava-segment-to-gpx' Go exe, did you install deps? Check doc.\n");
+    return false;
+  }
+
   while ( std::getline (myfile,line) ) {
     std::string::size_type comma = line.find(',');
     unsigned int id = atoi(line.substr(0, comma).c_str());
@@ -286,9 +299,8 @@ bool file2gpx(const std::string & segmentsfile,
       printf("GPX file '%s' already exists!\n", outfile.str().c_str());
       continue;
     }
-    //   /home/arnaud/src/go/bin/strava-segment-to-gpx -token XXX -id $ID > $OUT
-    cmd << "  /home/arnaud/src/go/bin/strava-segment-to-gpx -token "
-        << token << " -id " << id << " > " << outfile.str();
+    // /home/arnaud/src/go/bin/strava-segment-to-gpx -token XXX -id $ID > $OUT
+    cmd << goexe_path << "  -token " << token << " -id " << id << " > " << outfile.str();
     //printf("cmd:'%s'\n", cmd.str().c_str());
     if (system(cmd.str().c_str()))
       return false;
@@ -324,6 +336,8 @@ void offset(Segment & s, const double & offset_dd) {
   s.back().lon += + offset_dd * dy * norm_inv;
   s.back().lat += - offset_dd * dx * norm_inv;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 bool gpx2final(const std::string & outdir,
                const std::string & outfile) {
@@ -438,7 +452,10 @@ int main(int argc, char *argv[]) {
     printf("  LAT:    latitude in decimal degrees of the center of the search area (for instance your city)\n");
     printf("  LON:    longitude in decimal degrees of the center of the search area\n");
     printf("  RADIUS: radius in kilometers of the search area\n");
-    printf("  NLAT:   number of cells in latitude or longitude (so nb of steps=NLAT*NLAT)\n");
+    printf("  NLAT:   number of cells in latitude or longitude (so nb of steps=NLAT*NLAT). Default: 3\n");
+    printf("  GPXDIR: folder where to store the retrieved segments GPX. Default: '/tmp'\n");
+    printf("  OUTFILE:filename of the generated GPX file. Default: 'strava_segments2gpx.gpx'\n");
+    printf("\n");
     printf("Example: %s mytoken123  47.0810  2.3988  75\n", argv[0]);
     return -1;
   }
@@ -447,11 +464,12 @@ int main(int argc, char *argv[]) {
   double clon = atof(argv[3]);
   double radius = atof(argv[4]);
   int nlat =(argc >= 6 ? atof(argv[5]) : 3);
-  std::string segmentsfile = "/tmp/segments.csv", outdir = "/tmp";
+  std::string gpxdir =(argc >= 7 ? argv[6] : "/tmp");
+  std::string segmentsfile = "/tmp/segments.csv";
+  std::string outfile = "strava_segments2gpx.gpx";
 
-  segments_list2file(token, clat, clon, radius, nlat, segmentsfile);
-  file2gpx(segmentsfile, token, outdir);
-  gpx2final(outdir, "strava_segments2gpx.gpx");
-
-  return 0;
+  bool ok = segments_list2file(token, clat, clon, radius, nlat, segmentsfile)
+      && file2gpx(segmentsfile, token, gpxdir)
+      && gpx2final(gpxdir, outfile);
+  return (ok ? 0 : -1);
 }

@@ -1,0 +1,17 @@
+# travis rules for project
+language: cpp
+compiler:
+  - gcc
+
+before_install:
+  # install deps
+  - sudo apt-get install -y  cmake  libcurl4-openssl-dev  golang-go
+  - mkdir --parents ~/go
+  - export GOPATH=~/go
+  - go get github.com/rgarcia/strava-segment-to-gpx
+
+script: # compile
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
