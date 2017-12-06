@@ -1,6 +1,12 @@
 # strava_segments2gpx
 
+[![Build Status](https://travis-ci.org/arnaud-ramey/strava_segments2gpx.svg)](https://travis-ci.org/arnaud-ramey/strava_segments2gpx)
+
 Batch-export all Strava segments around a Point of Interest (POI) into GPX format for hand-held GPS.
+
+![strava_logo](doc/strava_logo.png "strava_logo")
+-->
+![dakota](doc/dakota.jpg "dakota")
 
 Tired of not knowing where Strava segments are when you ride?
 With this program, you need to supply the coordinates of the POI, for instance your city.
@@ -10,8 +16,6 @@ older GPS navigators with no connectivity.
 
 You'll need to create a Strava app to get an
 [access token](https://www.strava.com/settings/api).
-
-[![Build Status](https://travis-ci.org/arnaud-ramey/strava_segments2gpx.svg)](https://travis-ci.org/arnaud-ramey/strava_segments2gpx)
 
 Less words, more screenshots
 ============================
